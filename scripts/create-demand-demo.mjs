@@ -1,0 +1,24 @@
+import { mkdirSync, writeFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { randomUUID } from "node:crypto";
+import { fileURLToPath } from "node:url";
+import { RadarStore } from "../packages/storage/dist/index.js";
+
+const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
+const sourcePath = process.env.DEMAND_DEMO_SOURCE_DB?.trim() || "C:/Users/1003584/AppData/Local/Temp/radar-demand-live-PH6r5a/opportunity-radar.sqlite";
+const requestedDirectory = process.env.DEMAND_DEMO_DIRECTORY?.trim() || ".data/demand-demo-20261026";
+const dataDirectory = resolve(root, requestedDirectory);
+mkdirSync(dataDirectory, { recursive: true });
+const source = new RadarStore(sourcePath);
+const sourceRunId = process.env.DEMAND_DEMO_SOURCE_RUN_ID?.trim();
+const sourceRun = sourceRunId ? source.getDemandRun(sourceRunId) : source.listDemandRuns(10).find(run => run.snapshot?.projects.length && run.snapshot.sources.length);
+if (!sourceRun?.snapshot) throw new Error("没有找到可复用的真实需求研究快照");
+source.close();
+const target = new RadarStore(resolve(dataDirectory, "opportunity-radar.sqlite"));
+if (target.listDemandRuns(1).length) throw new Error("演示数据库已存在研究记录；为避免覆盖，先移除或指定新的数据目录");
+const run = target.createDemandRun(randomUUID(), sourceRun.question, null);
+target.checkpointDemandRun(run.id, structuredClone(sourceRun.snapshot));
+const manifest = { runId: run.id, question: sourceRun.question, sourceRunId: sourceRun.id, status: sourceRun.status, projects: sourceRun.snapshot.projects.map(project => project.fullName), sourceCount: sourceRun.snapshot.sources.length, note: "由已核验的真实 GitHub HTTPS 研究快照导入；未重新调用模型或网络。" };
+writeFileSync(resolve(dataDirectory, "manifest.json"), JSON.stringify(manifest, null, 2), "utf8");
+target.close();
+console.log(JSON.stringify(manifest));

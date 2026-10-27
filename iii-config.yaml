@@ -1,0 +1,6 @@
+# The SDK worker supplies application functions. Bind the engine to this machine.
+workers:
+  - name: iii-worker-manager
+    config:
+      host: 127.0.0.1
+      port: 49134

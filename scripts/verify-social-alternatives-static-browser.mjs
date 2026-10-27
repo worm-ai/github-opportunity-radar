@@ -1,0 +1,47 @@
+// Read-only UI check of the newly archived static decision. No new model task.
+import assert from 'node:assert/strict';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { chromium } from '@playwright/test';
+const base = 'http://127.0.0.1:4318';
+const publication = JSON.parse(readFileSync('.data/experiments/social-alternatives-source-2026-10-23/publication.json', 'utf8'));
+const taskId = '86de1f5b-45a6-40d9-b01c-122a1d20bb36';
+const output = '.data/browser/social-alternatives-static';
+mkdirSync(output, { recursive: true });
+const get = async path => { const response = await fetch(`${base}/api/v1/${path}`); assert.equal(response.status, 200); return response.json(); };
+const before = { task: await get(`demands/${taskId}`), notes: await get('research-notes') };
+const browser = await chromium.launch({ channel: 'msedge', headless: true });
+const errors = [], writes = [];
+try {
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  page.on('pageerror', error => errors.push(error.message));
+  page.on('request', request => { if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method())) writes.push({ method: request.method(), url: request.url() }); });
+  await page.goto(`${base}/research?run=${taskId}#demand-decisions`);
+  const note = page.locator(`[data-note-id="${publication.noteId}"]`);
+  await note.waitFor();
+  const text = await note.innerText();
+  assert.ok(text.includes('待人工复核') && text.includes('静态判断') && text.includes('两应用都未运行') && text.includes('原模型评估仍超时'));
+  assert.equal((await get(`demands/${taskId}`)).status, 'failed');
+  await note.scrollIntoViewIfNeeded();
+  await page.screenshot({ path: `${output}/decision.png` });
+  await page.reload();
+  await note.waitFor();
+  await page.goto(`${base}/experiments#experiment-${publication.id}`);
+  await page.getByText('社会模拟选型：AI Town 与 Stanford 静态源码核查（未运行应用）', { exact: true }).waitFor();
+  const body = await page.locator('body').innerText();
+  assert.ok(body.includes('未运行应用') && body.includes('静态：AI Town 活动选择'));
+  const sourceLink = page.locator(`a[href="/api/v1/experiments/${publication.id}/artifacts/sources.json"]`);
+  assert.equal(await sourceLink.count(), 1);
+  const sources = await page.request.get(`${base}/api/v1/experiments/${publication.id}/artifacts/sources.json`);
+  assert.equal(sources.status(), 200);
+  const sourceData = await sources.json();
+  assert.equal(sourceData.sourceFiles.length, 14);
+  assert.equal(sourceData.upstreamCodeExecuted, false);
+  await page.screenshot({ path: `${output}/archive.png` });
+  const after = { task: await get(`demands/${taskId}`), notes: await get('research-notes') };
+  assert.deepEqual(after, before);
+  assert.deepEqual(errors, []);
+  assert.deepEqual(writes, []);
+  const receipt = { observedAt: new Date().toISOString(), taskId, noteId: publication.noteId, archiveId: publication.id, staticBoundaryVisible: true, verifiedSources: 14, failedModelTaskPreserved: true, tasksAndNotesUnchanged: true, errors, writes };
+  writeFileSync(`${output}/verification.json`, JSON.stringify(receipt, null, 2));
+  console.log(JSON.stringify(receipt));
+} finally { await browser.close(); }

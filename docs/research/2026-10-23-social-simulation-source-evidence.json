@@ -1,0 +1,174 @@
+{
+  "version": 1,
+  "method": "Static source inspection only. No upstream installation, imports, execution or runtime validation.",
+  "createdAt": "2026-10-23T03:30:46.741Z",
+  "repositories": [
+    {
+      "fullName": "KsanaDock/Microverse",
+      "commitSha": "7a061d41ed67825496588e39ca37b0b2b7465fb2",
+      "verifiedLocalFiles": 32,
+      "excerpts": [
+        {
+          "path": "project.godot",
+          "blobSha": "4b079d83d36f25d65871363b1b5bf80a53f9453f",
+          "commitSha": "7a061d41ed67825496588e39ca37b0b2b7465fb2",
+          "startLine": 10,
+          "endLine": 27,
+          "url": "https://github.com/KsanaDock/Microverse/blob/7a061d41ed67825496588e39ca37b0b2b7465fb2/project.godot#L10-L27",
+          "content": "\n[application]\n\nconfig/name=\"Microverse\"\nrun/main_scene=\"uid://nhba2jdtsjsx\"\nconfig/features=PackedStringArray(\"4.4\", \"GL Compatibility\")\nconfig/icon=\"res://icon.svg\"\n\n[autoload]\n\nSettingsManager=\"*res://script/ui/SettingsManager.gd\"\nDialogManager=\"*res://script/ai/DialogManager.gd\"\nCharacterManager=\"*res://script/CharacterManager.gd\"\nAPIManager=\"*res://script/ai/APIManager.gd\"\nGameSaveManager=\"*res://script/GameSaveManager.gd\"\nSaveLoadUIManager=\"*res://scene/ui/SaveLoadUIManager.tscn\"\nMemoryManager=\"*res://script/ai/memory/MemoryManager.gd\"\n"
+        },
+        {
+          "path": "script/ai/AIAgent.gd",
+          "blobSha": "b9cd802660cb2430d3fc2322f7f5f6492266473d",
+          "commitSha": "7a061d41ed67825496588e39ca37b0b2b7465fb2",
+          "startLine": 267,
+          "endLine": 310,
+          "url": "https://github.com/KsanaDock/Microverse/blob/7a061d41ed67825496588e39ca37b0b2b7465fb2/script/ai/AIAgent.gd#L267-L310",
+          "content": "func get_character_status_info(char_node = null) -> String:\n\t# 使用传入的角色节点，如果没有则使用当前角色\n\tvar target_character = char_node if char_node else character\n\tvar status_info = \"\"\n\t\n\t# 基本状态信息\n\tvar money = target_character.get_meta(\"money\", 0)\n\tvar mood = target_character.get_meta(\"mood\", \"普通\")\n\tvar health = target_character.get_meta(\"health\", \"良好\")\n\t\n\tstatus_info += \"\\n\\n个人状态信息：\"\n\tstatus_info += \"\\n- 存款：\" + str(money) + \"元\"\n\tstatus_info += \"\\n- 心情状态：\" + mood\n\tstatus_info += \"\\n- 健康状况：\" + health\n\t\n\t# 使用MemoryManager获取格式化的记忆信息\n\tstatus_info += MemoryManager.get_formatted_memories_for_prompt(target_character)\n\t\n\t# 情感关系信息\n\tvar relations = target_character.get_meta(\"relations\", {})\n\tif relations.size() > 0:\n\t\tstatus_info += \"\\n\\n对其他同事的情感关系：\"\n\t\tfor target_name in relations:\n\t\t\tvar relation = relations[target_name]\n\t\t\tvar emotion_type = relation[\"type\"] if relation.has(\"type\") else \"未知\"\n\t\t\tvar strength = relation[\"strength\"] if relation.has(\"strength\") else 0\n\t\t\tvar strength_desc = \"\"\n\t\t\tif strength < -5:\n\t\t\t\tstrength_desc = \"强烈\"\n\t\t\telif strength < 0:\n\t\t\t\tstrength_desc = \"轻微\"\n\t\t\telif strength == 0:\n\t\t\t\tstrength_desc = \"中立\"\n\t\t\telif strength <= 5:\n\t\t\t\tstrength_desc = \"轻微\"\n\t\t\telse:\n\t\t\t\tstrength_desc = \"强烈\"\n\t\t\t\n\t\t\tstatus_info += \"\\n- 对\" + target_name + \"：\" + strength_desc + emotion_type + \"（强度：\" + str(strength) + \"）\"\n\t\n\treturn status_info\n\n# 获取公司员工信息字符串\nfunc get_company_employees_info() -> String:"
+        },
+        {
+          "path": "script/ai/AIAgent.gd",
+          "blobSha": "b9cd802660cb2430d3fc2322f7f5f6492266473d",
+          "commitSha": "7a061d41ed67825496588e39ca37b0b2b7465fb2",
+          "startLine": 331,
+          "endLine": 361,
+          "url": "https://github.com/KsanaDock/Microverse/blob/7a061d41ed67825496588e39ca37b0b2b7465fb2/script/ai/AIAgent.gd#L331-L361",
+          "content": "func get_character_task_info(char_node = null) -> String:\n\t# 使用传入的角色节点，如果没有则使用当前角色\n\tvar target_character = char_node if char_node else character\n\tvar task_info = \"\"\n\t\n\t# 获取任务列表\n\tvar tasks = target_character.get_meta(\"tasks\", [])\n\t\n\tif tasks.is_empty():\n\t\ttask_info += \"\\n\\n当前任务状态：暂无任务\"\n\t\treturn task_info\n\t\t\n\t# 按渴望程度排序任务（从高到低）\n\ttasks.sort_custom(func(a, b): return a[\"priority\"] > b[\"priority\"])\n\t\n\ttask_info += \"\\n\\n当前任务列表（按渴望程度排序）：\"\n\t\n\t# 显示前3个最重要的任务\n\tvar display_count = min(3, tasks.size())\n\tfor i in range(display_count):\n\t\tvar task = tasks[i]\n\t\ttask_info += \"\\n%d. %s（渴望程度：%d/10）\" % [i + 1, task[\"description\"], task[\"priority\"]]\n\t\t\n\t# 如果还有更多任务，显示总数\n\tif tasks.size() > display_count:\n\t\ttask_info += \"\\n...还有 %d 个任务待完成\" % (tasks.size() - display_count)\n\t\t\n\ttask_info += \"\\n\\n任务完成建议：你应该优先完成渴望程度最高的任务。\"\n\t\n\t# 检查是否需要刷新每日任务\n\t_check_and_refresh_daily_tasks(target_character)"
+        },
+        {
+          "path": "script/ai/AIAgent.gd",
+          "blobSha": "b9cd802660cb2430d3fc2322f7f5f6492266473d",
+          "commitSha": "7a061d41ed67825496588e39ca37b0b2b7465fb2",
+          "startLine": 1123,
+          "endLine": 1174,
+          "url": "https://github.com/KsanaDock/Microverse/blob/7a061d41ed67825496588e39ca37b0b2b7465fb2/script/ai/AIAgent.gd#L1123-L1174",
+          "content": "# 继续当前任务\nfunc _continue_current_task(char_node = null):\n\tvar target_character = char_node if char_node else character\n\t\n\t# 如果正在等待API响应，跳过\n\tif target_character.name in waiting_responses and waiting_responses[target_character.name]:\n\t\treturn\n\t\n\t# 获取当前最重要的任务\n\tvar metadata = target_character.get_meta(\"character_data\", {})\n\tvar tasks = metadata.get(\"tasks\", [])\n\t\n\t# 过滤未完成的任务并按优先级排序\n\tvar active_tasks = []\n\tfor task in tasks:\n\t\tif not task.get(\"completed\", false):\n\t\t\tactive_tasks.append(task)\n\t\n\tif active_tasks.size() == 0:\n\t\tprint(\"[AIAgent] %s 没有未完成的任务\" % target_character.name)\n\t\t# 生成新任务\n\t\tawait _generate_initial_tasks()\n\t\treturn\n\t\n\t# 按优先级排序\n\tactive_tasks.sort_custom(func(a, b): return a.priority > b.priority)\n\tvar current_task = active_tasks[0]\n\t\n\t# 获取角色人设和状态\n\tvar personality = CharacterPersonality.get_personality(target_character.name)\n\tvar status_info = get_character_status_info(target_character)\n\tvar scene_description = generate_scene_description()\n\t\n\t# 构建执行任务的prompt\n\tvar prompt = \"你是一个办公室员工，名字是%s。你的职位是：%s。你的性格是：%s。\" % [\n\t\ttarget_character.name,\n\t\tpersonality[\"position\"],\n\t\tpersonality[\"personality\"]\n\t]\n\t\n\t# 添加公司基本信息和员工名单信息\n\tprompt += get_company_basic_info()\n\tprompt += get_company_employees_info()\n\tprompt += status_info\n\tprompt += \"\\n\" + scene_description\n\tprompt += \"\\n\\n你当前最重要的任务是：%s（渴望程度：%d）\" % [current_task.description, current_task.priority]\n\tprompt += \"\\n\\n为了完成这个任务，你需要采取什么具体行动？请从以下选项中选择：\"\n\tprompt += \"\\n1. 移动到某个位置（去找相关的人或物品）\"\n\tprompt += \"\\n2. 与某个角色交谈（讨论任务相关内容）\"\n\tprompt += \"\\n3. 思考规划（在当前位置思考如何完成任务）\"\n\tprompt += \"\\n4. 完成任务（任务已经可以标记为完成）\"\n\tprompt += \"\\n请只回复数字1、2、3或4，不要有任何其他文字。\""
+        },
+        {
+          "path": "script/ai/AIAgent.gd",
+          "blobSha": "b9cd802660cb2430d3fc2322f7f5f6492266473d",
+          "commitSha": "7a061d41ed67825496588e39ca37b0b2b7465fb2",
+          "startLine": 1573,
+          "endLine": 1603,
+          "url": "https://github.com/KsanaDock/Microverse/blob/7a061d41ed67825496588e39ca37b0b2b7465fb2/script/ai/AIAgent.gd#L1573-L1603",
+          "content": "func _complete_task(target_character, current_task):\n\t# 获取角色元数据\n\tvar metadata = target_character.get_meta(\"character_data\", {})\n\tvar tasks = metadata.get(\"tasks\", [])\n\t\n\t# 找到并标记任务为完成\n\tfor i in range(tasks.size()):\n\t\tvar task = tasks[i]\n\t\tif task.description == current_task.description and task.created_at == current_task.created_at:\n\t\t\ttask[\"completed\"] = true\n\t\t\ttask[\"completed_at\"] = Time.get_unix_time_from_system()\n\t\t\tbreak\n\t\n\t# 保存更新的任务列表\n\tmetadata[\"tasks\"] = tasks\n\ttarget_character.set_meta(\"character_data\", metadata)\n\t\n\t# 添加完成任务的记忆\n\t_add_memory(target_character, \"你成功完成了任务：%s。感觉很有成就感！\" % current_task.description)\n\t\n\tprint(\"[AIAgent] %s 完成了任务：%s\" % [target_character.name, current_task.description])\n\n# 重新安排任务优先级（占位函数）\nfunc _rearrange_task_priorities(target_character):\n\tprint(\"[AIAgent] %s 重新安排任务优先级（功能待实现）\" % target_character.name)\n\t_add_memory(target_character, \"你重新考虑了任务的优先级安排。\")\n\n# 添加紧急任务（占位函数）\nfunc _add_urgent_task(target_character):\n\tprint(\"[AIAgent] %s 添加紧急任务（功能待实现）\" % target_character.name)\n\t_add_memory(target_character, \"你意识到有一个紧急任务需要处理。\")"
+        },
+        {
+          "path": "script/ai/AIAgent.gd",
+          "blobSha": "b9cd802660cb2430d3fc2322f7f5f6492266473d",
+          "commitSha": "7a061d41ed67825496588e39ca37b0b2b7465fb2",
+          "startLine": 1730,
+          "endLine": 1749,
+          "url": "https://github.com/KsanaDock/Microverse/blob/7a061d41ed67825496588e39ca37b0b2b7465fb2/script/ai/AIAgent.gd#L1730-L1749",
+          "content": "func _generate_default_tasks(target_character):\n\tprint(\"[AIAgent] %s 生成默认任务列表\" % target_character.name)\n\t\n\t# 创建10个默认任务\n\tvar default_tasks = []\n\tfor i in range(10):\n\t\tvar task = _generate_random_task(target_character)\n\t\tif task:\n\t\t\tdefault_tasks.append(task)\n\t\n\t# 按优先级排序\n\tdefault_tasks.sort_custom(func(a, b): return a.priority > b.priority)\n\t\n\t# 保存任务到角色元数据\n\ttarget_character.set_meta(\"tasks\", default_tasks)\n\t\n\t# 添加任务生成记忆\n\tvar memories = target_character.get_meta(\"memories\", [])\n\tmemories.append(\"你为自己制定了新的任务计划，包含了%d个重要任务，准备开始执行。\" % default_tasks.size())\n\ttarget_character.set_meta(\"memories\", memories)"
+        },
+        {
+          "path": "script/ui/GodUI.gd",
+          "blobSha": "92cadf5f973efc0412a6d066287f25e9db210b90",
+          "commitSha": "7a061d41ed67825496588e39ca37b0b2b7465fb2",
+          "startLine": 473,
+          "endLine": 482,
+          "url": "https://github.com/KsanaDock/Microverse/blob/7a061d41ed67825496588e39ca37b0b2b7465fb2/script/ui/GodUI.gd#L473-L482",
+          "content": "\t# 设置情感关系\n\tif not character_a.has_meta(\"relations\"):\n\t\tcharacter_a.set_meta(\"relations\", {})\n\t\n\tvar relations = character_a.get_meta(\"relations\", {})\n\trelations[character_b.name] = {\n\t\t\"type\": type,\n\t\t\"strength\": strength\n\t}\n\tcharacter_a.set_meta(\"relations\", relations)"
+        },
+        {
+          "path": "script/ai/memory/MemoryManager.gd",
+          "blobSha": "f952aa34e630ba10efef695db224f6851ee19b0d",
+          "commitSha": "7a061d41ed67825496588e39ca37b0b2b7465fb2",
+          "startLine": 25,
+          "endLine": 61,
+          "url": "https://github.com/KsanaDock/Microverse/blob/7a061d41ed67825496588e39ca37b0b2b7465fb2/script/ai/memory/MemoryManager.gd#L25-L61",
+          "content": "\t# 从character_data中获取记忆\n\tvar character_data = character.get_meta(\"character_data\", {})\n\tvar memories = character_data.get(\"memories\", [])\n\t\n\treturn memories\n\n# 添加记忆到角色\nfunc add_memory(character: Node, memory_content: String, memory_type: MemoryType = MemoryType.PERSONAL, importance: MemoryImportance = MemoryImportance.NORMAL) -> void:\n\tif not character or memory_content.strip_edges().is_empty():\n\t\treturn\n\t\n\t# 获取当前时间\n\tvar current_time = Time.get_datetime_dict_from_system()\n\tvar time_str = \"%04d-%02d-%02d %02d:%02d\" % [\n\t\tcurrent_time.year, current_time.month, current_time.day,\n\t\tcurrent_time.hour, current_time.minute\n\t]\n\t\n\t# 创建记忆对象\n\tvar memory_obj = {\n\t\t\"content\": memory_content,\n\t\t\"timestamp\": time_str,\n\t\t\"type\": memory_type,\n\t\t\"importance\": importance,\n\t\t\"created_at\": Time.get_unix_time_from_system()\n\t}\n\t\n\t# 获取或创建character_data\n\tvar character_data = character.get_meta(\"character_data\", {})\n\tif not character_data.has(\"memories\"):\n\t\tcharacter_data[\"memories\"] = []\n\t\n\t# 添加记忆\n\tcharacter_data[\"memories\"].append(memory_obj)\n\tcharacter.set_meta(\"character_data\", character_data)\n\t\n\t# 清理旧记忆，保持记忆数量在合理范围内"
+        },
+        {
+          "path": "script/GameSaveManager.gd",
+          "blobSha": "cc67554d84b3ac293902a6c996eeb9baa2923d28",
+          "commitSha": "7a061d41ed67825496588e39ca37b0b2b7465fb2",
+          "startLine": 120,
+          "endLine": 170,
+          "url": "https://github.com/KsanaDock/Microverse/blob/7a061d41ed67825496588e39ca37b0b2b7465fb2/script/GameSaveManager.gd#L120-L170",
+          "content": "# 收集单个角色数据\nfunc collect_character_data(character: Node) -> Dictionary:\n\tif not character:\n\t\treturn {}\n\t\n\tvar character_data = {\n\t\t\"name\": character.name,\n\t\t\"position\": {\"x\": character.global_position.x, \"y\": character.global_position.y},\n\t\t\"facing_direction\": \"\",\n\t\t\"is_sitting\": false,\n\t\t\"current_chair\": null,\n\t\t\"is_player_controlled\": false,\n\t\t\"ai_state\": {},\n\t\t\"tasks\": [],\n\t\t\"personality\": {}\n\t}\n\t\n\t# 获取角色控制器数据\n\tvar controller = character.get_node_or_null(\"CharacterController\")\n\tif not controller:\n\t\tcontroller = character\n\t\n\tif controller:\n\t\t# 基本状态\n\t\tif controller.has_property(\"facing_direction\"):\n\t\t\tcharacter_data[\"facing_direction\"] = controller.facing_direction\n\t\tif controller.has_property(\"is_sitting\"):\n\t\t\tcharacter_data[\"is_sitting\"] = controller.is_sitting\n\t\tif controller.has_property(\"current_chair\") and controller.current_chair:\n\t\t\tcharacter_data[\"current_chair\"] = controller.current_chair.name\n\t\n\t# 获取AI代理数据\n\tvar ai_agent = character.get_node_or_null(\"AIAgent\")\n\tif ai_agent:\n\t\tcharacter_data[\"is_player_controlled\"] = ai_agent.is_player_controlled if ai_agent.has_property(\"is_player_controlled\") else false\n\t\t\n\t\t# AI状态\n\t\tif ai_agent.has_property(\"current_state\"):\n\t\t\tcharacter_data[\"ai_state\"][\"current_state\"] = ai_agent.current_state\n\t\t\n\t\t# 任务数据\n\t\tif ai_agent.has_property(\"current_tasks\"):\n\t\t\tcharacter_data[\"tasks\"] = ai_agent.current_tasks.duplicate() if ai_agent.current_tasks else []\n\t\telif ai_agent.has_property(\"tasks\"):\n\t\t\tcharacter_data[\"tasks\"] = ai_agent.tasks.duplicate() if ai_agent.tasks else []\n\t\n\t# 获取角色性格数据\n\tvar personality = CharacterPersonality.get_personality(character.name) if CharacterPersonality else {}\n\tcharacter_data[\"personality\"] = personality\n\t\n\treturn character_data"
+        },
+        {
+          "path": "script/GameSaveManager.gd",
+          "blobSha": "cc67554d84b3ac293902a6c996eeb9baa2923d28",
+          "commitSha": "7a061d41ed67825496588e39ca37b0b2b7465fb2",
+          "startLine": 237,
+          "endLine": 253,
+          "url": "https://github.com/KsanaDock/Microverse/blob/7a061d41ed67825496588e39ca37b0b2b7465fb2/script/GameSaveManager.gd#L237-L253",
+          "content": "\t# 获取AI代理\n\tvar ai_agent = character.get_node_or_null(\"AIAgent\")\n\tif ai_agent:\n\t\t# 设置玩家控制状态\n\t\tif data.has(\"is_player_controlled\") and ai_agent.has_method(\"toggle_player_control\"):\n\t\t\tai_agent.toggle_player_control(data[\"is_player_controlled\"])\n\t\t\n\t\t# 恢复AI状态\n\t\tif data.has(\"ai_state\") and data[\"ai_state\"].has(\"current_state\") and ai_agent.has_property(\"current_state\"):\n\t\t\tai_agent.current_state = data[\"ai_state\"][\"current_state\"]\n\t\t\n\t\t# 恢复任务\n\t\tif data.has(\"tasks\"):\n\t\t\tif ai_agent.has_property(\"current_tasks\"):\n\t\t\t\tai_agent.current_tasks = data[\"tasks\"].duplicate()\n\t\t\telif ai_agent.has_property(\"tasks\"):\n\t\t\t\tai_agent.tasks = data[\"tasks\"].duplicate()"
+        }
+      ]
+    },
+    {
+      "fullName": "sbenodiz/agent-world",
+      "commitSha": "13d62dbdeeca07c7b5bb3b8aa264ca9834b01882",
+      "verifiedLocalFiles": 8,
+      "excerpts": [
+        {
+          "path": "world/relationships.py",
+          "blobSha": "43a16d321208716c40ae8096a4ade2ee0efb6468",
+          "commitSha": "13d62dbdeeca07c7b5bb3b8aa264ca9834b01882",
+          "startLine": 65,
+          "endLine": 104,
+          "url": "https://github.com/sbenodiz/agent-world/blob/13d62dbdeeca07c7b5bb3b8aa264ca9834b01882/world/relationships.py#L65-L104",
+          "content": "    def update_score(self, agents_dict: dict, agent_a: str, agent_b: str, delta: int) -> list:\n        \"\"\"\n        Update relationship score between two agents.\n        Returns list of threshold-crossing events (WorldEvent dicts).\n        \"\"\"\n        from world.events import WorldEvent\n\n        events = []\n        a_state = agents_dict.get(agent_a)\n        b_state = agents_dict.get(agent_b)\n        if not a_state or not b_state:\n            return events\n\n        # Update A's view of B\n        old_a = a_state.relationships.get(agent_b, 0)\n        new_a = max(-100, min(100, old_a + delta))\n        a_state.relationships[agent_b] = new_a\n\n        crossing = check_threshold_crossing(old_a, new_a)\n        if crossing:\n            events.append(WorldEvent(\n                type=\"relationship_changed\",\n                data={\"with\": b_state.name, \"with_id\": agent_b,\n                      \"delta\": delta, \"new_score\": new_a, \"label\": crossing}\n            ))\n\n        # Update B's view of A\n        old_b = b_state.relationships.get(agent_a, 0)\n        new_b = max(-100, min(100, old_b + delta))\n        b_state.relationships[agent_a] = new_b\n\n        crossing_b = check_threshold_crossing(old_b, new_b)\n        if crossing_b:\n            events.append(WorldEvent(\n                type=\"relationship_changed\",\n                data={\"with\": a_state.name, \"with_id\": agent_a,\n                      \"delta\": delta, \"new_score\": new_b, \"label\": crossing_b}\n            ))\n\n        return events"
+        },
+        {
+          "path": "world/engine.py",
+          "blobSha": "3143dfcfa5c2a7d2c203cc40ed6395ec4dfb33eb",
+          "commitSha": "13d62dbdeeca07c7b5bb3b8aa264ca9834b01882",
+          "startLine": 146,
+          "endLine": 167,
+          "url": "https://github.com/sbenodiz/agent-world/blob/13d62dbdeeca07c7b5bb3b8aa264ca9834b01882/world/engine.py#L146-L167",
+          "content": "    def _update_colocation_relationships(self):\n        active_agents = self.agents.get_active_agents()\n        processed = set()\n\n        for agent in active_agents:\n            nearby = self._previous_nearby.get(agent.id, set())\n            for other_id in nearby:\n                pair = tuple(sorted([agent.id, other_id]))\n                if pair in processed:\n                    continue\n                processed.add(pair)\n\n                count = self.relationships.track_colocation(agent.id, other_id)\n                if count > 0 and count % 5 == 0:\n                    events = self.relationships.update_score(\n                        self.agents.agents, agent.id, other_id, 1\n                    )\n                    for ev in events:\n                        if ev.data.get(\"with_id\") == other_id:\n                            self.events.push(agent.id, ev)\n                        else:\n                            self.events.push(other_id, ev)"
+        },
+        {
+          "path": "world/engine.py",
+          "blobSha": "3143dfcfa5c2a7d2c203cc40ed6395ec4dfb33eb",
+          "commitSha": "13d62dbdeeca07c7b5bb3b8aa264ca9834b01882",
+          "startLine": 180,
+          "endLine": 200,
+          "url": "https://github.com/sbenodiz/agent-world/blob/13d62dbdeeca07c7b5bb3b8aa264ca9834b01882/world/engine.py#L180-L200",
+          "content": "    def _trigger_world_event(self):\n        from world.world_events import pick_random_world_event\n        we = pick_random_world_event()\n        event = WorldEvent(\n            type=\"world_event\",\n            data={\n                \"category\": we[\"category\"],\n                \"description\": we[\"description\"],\n            }\n        )\n        for agent in self.agents.get_active_agents():\n            self.events.push(agent.id, event)\n        self._add_recent_event(\"world_event\", f\"[{we['category'].upper()}] {we['description']}\")\n        # Log to DB\n        try:\n            from django.db import close_old_connections\n            from world.models import WorldLog\n            close_old_connections()\n            WorldLog.objects.create(event_type=\"world_event\", data_json=json.dumps(we))\n        except Exception as e:\n            logger.error(f\"WorldLog save error: {e}\")"
+        },
+        {
+          "path": "world/engine.py",
+          "blobSha": "3143dfcfa5c2a7d2c203cc40ed6395ec4dfb33eb",
+          "commitSha": "13d62dbdeeca07c7b5bb3b8aa264ca9834b01882",
+          "startLine": 347,
+          "endLine": 373,
+          "url": "https://github.com/sbenodiz/agent-world/blob/13d62dbdeeca07c7b5bb3b8aa264ca9834b01882/world/engine.py#L347-L373",
+          "content": "        agent.current_action = f'saying: \"{message}\"'\n        nearby = self.agents.get_nearby_agents(agent.id)\n\n        event = WorldEvent(\n            type=\"message\",\n            data={\n                \"from\": agent.name,\n                \"from_id\": agent.id,\n                \"message\": message,\n                \"zone\": agent.zone,\n            }\n        )\n\n        for other in nearby:\n            self.events.push(other.id, event)\n            # Relationship: spoke to each other +2\n            rel_events = self.relationships.update_score(\n                self.agents.agents, agent.id, other.id, 2\n            )\n            for re in rel_events:\n                if re.data.get(\"with_id\") == other.id:\n                    self.events.push(agent.id, re)\n                else:\n                    self.events.push(other.id, re)\n\n        self._add_recent_event(\"message\", f\"{agent.name}: {message}\")\n        return {\"ok\": True, \"heard_by\": [n.name for n in nearby]}"
+        },
+        {
+          "path": "world/models.py",
+          "blobSha": "8c33c24fe8b2cb114de17ed3465ea6fa634e7f56",
+          "commitSha": "13d62dbdeeca07c7b5bb3b8aa264ca9834b01882",
+          "startLine": 8,
+          "endLine": 21,
+          "url": "https://github.com/sbenodiz/agent-world/blob/13d62dbdeeca07c7b5bb3b8aa264ca9834b01882/world/models.py#L8-L21",
+          "content": "class AgentRecord(models.Model):\n    agent_id = models.CharField(max_length=255, primary_key=True)\n    api_key = models.CharField(max_length=255, unique=True, db_index=True)\n    name = models.CharField(max_length=100)\n    x = models.IntegerField(default=0)\n    y = models.IntegerField(default=0)\n    status = models.CharField(max_length=20, default=\"offline\")\n    relationships_json = models.TextField(default=\"{}\")\n    memory_json = models.TextField(default=\"[]\")\n    sprite_index = models.IntegerField(default=-1)\n    current_action = models.CharField(max_length=500, default=\"\", blank=True)\n    last_seen = models.FloatField(default=0.0)\n    is_npc = models.BooleanField(default=False)\n    created_at = models.DateTimeField(auto_now_add=True)"
+        },
+        {
+          "path": "sdk/agent.py",
+          "blobSha": "60a00b6a99bd67d2aa9ec833d302dddef806e9d9",
+          "commitSha": "13d62dbdeeca07c7b5bb3b8aa264ca9834b01882",
+          "startLine": 116,
+          "endLine": 134,
+          "url": "https://github.com/sbenodiz/agent-world/blob/13d62dbdeeca07c7b5bb3b8aa264ca9834b01882/sdk/agent.py#L116-L134",
+          "content": "    def wait_for_event(self, timeout: int = 30) -> dict:\n        \"\"\"Block until a world event occurs. Returns event dict.\"\"\"\n        return self._call_tool(\"wait_for_event\", {\"timeout\": timeout}, timeout=timeout + 5)\n\n    def act(self, action_type: str, **kwargs) -> dict:\n        \"\"\"Take an action in the world.\"\"\"\n        return self._call_tool(\"act\", {\"action_type\": action_type, **kwargs})\n\n    def get_context(self) -> dict:\n        \"\"\"Get full world context for your agent.\"\"\"\n        return self._call_tool(\"get_world_context\", {})\n\n    def get_nearby(self) -> dict:\n        \"\"\"Get agents in your zone.\"\"\"\n        return self._call_tool(\"get_nearby\", {})\n\n    def get_relationships(self) -> dict:\n        \"\"\"Get relationship scores.\"\"\"\n        return self._call_tool(\"get_relationships\", {})"
+        },
+        {
+          "path": "sdk/agent.py",
+          "blobSha": "60a00b6a99bd67d2aa9ec833d302dddef806e9d9",
+          "commitSha": "13d62dbdeeca07c7b5bb3b8aa264ca9834b01882",
+          "startLine": 141,
+          "endLine": 162,
+          "url": "https://github.com/sbenodiz/agent-world/blob/13d62dbdeeca07c7b5bb3b8aa264ca9834b01882/sdk/agent.py#L141-L162",
+          "content": "if __name__ == \"__main__\":\n    # Example usage\n    client = AgentWorldClient(\"TestAgent\", \"http://localhost:3001\")\n    print(f\"Agent: {client.agent_name}\")\n    print(f\"API Key: {client.api_key} (save this to reconnect!)\")\n\n    while True:\n        event = client.wait_for_event()\n        result = event.get(\"result\", event)\n        event_type = result.get(\"type\", \"unknown\")\n\n        if event_type == \"heartbeat\":\n            print(\".\", end=\"\", flush=True)\n            continue\n\n        print(f\"\\nEvent: {event_type}\")\n        print(json.dumps(result, indent=2))\n\n        # Simple auto-response: greet when someone arrives\n        if event_type == \"agent_arrived\":\n            agent_name = result.get(\"agent\", {}).get(\"name\", \"someone\")\n            client.act(\"speak\", message=f\"Hello {agent_name}!\")"
+        }
+      ]
+    }
+  ]
+}

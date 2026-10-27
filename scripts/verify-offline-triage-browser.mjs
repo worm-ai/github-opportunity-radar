@@ -1,0 +1,30 @@
+import assert from "node:assert/strict";
+import { chromium } from "@playwright/test";
+
+const base = process.env.RADAR_BROWSER_URL ?? "http://127.0.0.1:4362";
+const browser = await chromium.launch({ channel: "msedge", headless: true });
+const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+const page = await context.newPage();
+const errors = [];
+const writes = [];
+page.on("pageerror", (error) => errors.push(error.message));
+page.on("request", (request) => { if (!["GET", "HEAD", "OPTIONS"].includes(request.method())) writes.push(`${request.method()} ${request.url()}`); });
+
+await page.goto(`${base}/research`);
+await page.getByLabel("你的需求").fill("我想做一个本地优先的多智能体社会模拟原型，支持共享事件、持久记忆和重启恢复。");
+await page.getByRole("button", { name: "先查本地缓存" }).click();
+const cache = page.locator('[aria-label="本地缓存候选"]');
+await cache.waitFor();
+const triage = cache.locator('[aria-label="离线证据短名单"]');
+await triage.waitFor();
+assert.ok(await triage.locator(".cache-triage-card").count() > 0);
+await triage.getByText("不是推荐", { exact: false }).waitFor();
+assert.ok(await cache.locator("a[href*='github.com']").count() > 0);
+assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+await page.setViewportSize({ width: 390, height: 844 });
+assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+assert.deepEqual(errors, []);
+assert.deepEqual(writes, []);
+console.log(JSON.stringify({ base, candidates: await triage.locator(".cache-triage-card").count(), githubLinks: await cache.locator("a[href*='github.com']").count(), mobileOverflow: false, errors, writes }));
+await context.close();
+await browser.close();

@@ -1,0 +1,22 @@
+{
+  "name": "@radar/contracts",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js",
+    "./analysis-outcome": "./dist/analysis-outcome.js",
+    "./research": "./dist/research.js",
+    "./issues": "./dist/issues.js",
+    "./validation": "./dist/validation.js"
+  },
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@world2agent/sdk": "0.1.0-alpha.1",
+    "ajv": "^8.17.1",
+    "zod": "^3.25.76"
+  }
+}
